@@ -361,3 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Unity (if applicable)
+Library/
+Temp/
+Logs/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public class AStarSearch
 {
@@ -239,7 +240,121 @@ public class AStarSearch
         }
     }
 
+    /// <summary>
+    /// Returns the shortest path from src to dest as a list of (row, col) tuples,
+    /// or null if no path exists. Unlike AStar(), this method returns a result
+    /// instead of printing to the console, making it testable.
+    /// </summary>
+    public static List<(int row, int col)>? FindPath(int[,] grid, Pair src, Pair dest)
+    {
+        int ROW = grid.GetLength(0);
+        int COL = grid.GetLength(1);
+
+        if (!IsValid(src.first, src.second, ROW, COL) || !IsValid(dest.first, dest.second, ROW, COL))
+            return null;
+
+        if (!IsUnBlocked(grid, src.first, src.second) || !IsUnBlocked(grid, dest.first, dest.second))
+            return null;
+
+        if (src.first == dest.first && src.second == dest.second)
+            return new List<(int, int)> { (src.first, src.second) };
+
+        bool[,] closedList = new bool[ROW, COL];
+        Cell[,] cellDetails = new Cell[ROW, COL];
+
+        for (int i = 0; i < ROW; i++)
+            for (int j = 0; j < COL; j++)
+            {
+                cellDetails[i, j].f = double.MaxValue;
+                cellDetails[i, j].g = double.MaxValue;
+                cellDetails[i, j].h = double.MaxValue;
+                cellDetails[i, j].parent_i = -1;
+                cellDetails[i, j].parent_j = -1;
+            }
+
+        int sx = src.first, sy = src.second;
+        cellDetails[sx, sy].f = 0.0;
+        cellDetails[sx, sy].g = 0.0;
+        cellDetails[sx, sy].h = 0.0;
+        cellDetails[sx, sy].parent_i = sx;
+        cellDetails[sx, sy].parent_j = sy;
+
+        var openList = new SortedSet<(double, Pair)>(
+            Comparer<(double, Pair)>.Create((a, b) =>
+            {
+                int cmp = a.Item1.CompareTo(b.Item1);
+                if (cmp != 0) return cmp;
+                int ri = a.Item2.first.CompareTo(b.Item2.first);
+                if (ri != 0) return ri;
+                return a.Item2.second.CompareTo(b.Item2.second);
+            }));
+
+        openList.Add((0.0, new Pair(sx, sy)));
+
+        while (openList.Count > 0)
+        {
+            var p = openList.Min;
+            openList.Remove(p);
+
+            int x = p.Item2.first;
+            int y = p.Item2.second;
+            closedList[x, y] = true;
+
+            for (int i = -1; i <= 1; i++)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    if (i == 0 && j == 0) continue;
+
+                    int nx = x + i;
+                    int ny = y + j;
+
+                    if (!IsValid(nx, ny, ROW, COL)) continue;
+
+                    if (IsDestination(nx, ny, dest))
+                    {
+                        cellDetails[nx, ny].parent_i = x;
+                        cellDetails[nx, ny].parent_j = y;
+
+                        // Trace path
+                        var path = new Stack<(int, int)>();
+                        int r = dest.first, c = dest.second;
+                        while (!(cellDetails[r, c].parent_i == r && cellDetails[r, c].parent_j == c))
+                        {
+                            path.Push((r, c));
+                            int tr = cellDetails[r, c].parent_i;
+                            int tc = cellDetails[r, c].parent_j;
+                            r = tr; c = tc;
+                        }
+                        path.Push((r, c));
+                        return path.ToList();
+                    }
+
+                    if (!closedList[nx, ny] && IsUnBlocked(grid, nx, ny))
+                    {
+                        double gNew = cellDetails[x, y].g + 1.0;
+                        double hNew = CalculateHValue(nx, ny, dest);
+                        double fNew = gNew + hNew;
+
+                        if (cellDetails[nx, ny].f == double.MaxValue || cellDetails[nx, ny].f > fNew)
+                        {
+                            openList.Add((fNew, new Pair(nx, ny)));
+                            cellDetails[nx, ny].f = fNew;
+                            cellDetails[nx, ny].g = gNew;
+                            cellDetails[nx, ny].h = hNew;
+                            cellDetails[nx, ny].parent_i = x;
+                            cellDetails[nx, ny].parent_j = y;
+                        }
+                    }
+                }
+            }
+        }
+
+        return null; // No path found
+    }
+
     // Driver method
+#if !TESTING
     public static void Main(string[] args)
     {
         /* Description of the Grid-
@@ -266,4 +381,5 @@ public class AStarSearch
 
         AStar(grid, src, dest);
     }
+#endif
 }
