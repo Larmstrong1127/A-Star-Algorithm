@@ -67,4 +67,4 @@ cd AStarTests && dotnet test
 
 ### Performance Note
 
-The `FindPath_PerformanceBenchmark_CompletesInTime` test demonstrates that the A* implementation scales efficiently. On a 50×50 fully open grid (2,500 cells), the algorithm consistently completes in well under 100 ms on modern hardware, showing the heuristic-guided search avoids unnecessary node expansion even at larger scales.
+The `FindPath_PerformanceBenchmark_CompletesInTime` test demonstrates that the A* implementation scales efficiently. The assertion is the honest bound: the test fails if a 50×50 fully open grid (2,500 cells) takes longer than 1000 ms. It runs far under that in practice, but the committed threshold is the only number here backed by an artifact, so it is the only one quoted.
